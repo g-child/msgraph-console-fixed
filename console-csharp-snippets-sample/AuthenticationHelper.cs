@@ -1,12 +1,11 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
-using System.Net.Http.Headers;
-using System.Net.Http;
 using System.Linq;
+using System.Net.Http.Headers;
 using System.Threading.Tasks;
 using Microsoft.Graph;
 using Microsoft.Identity.Client;
-using System.Collections.Generic;
 
 namespace console_csharp_snippets_sample
 {
@@ -33,8 +32,15 @@ namespace console_csharp_snippets_sample
                                             //"Group.Read.All" 
                                         };
 
-        public static PublicClientApplication IdentityClientApp = new PublicClientApplication(clientIdForUser);
-        public static ConfidentialClientApplication IdentityAppOnlyApp = new ConfidentialClientApplication(clientIdForApp, Constants.AuthorityUri, Constants.RedirectUriForAppAuthn, new ClientCredential(Constants.ClientSecret), new TokenCache(), new TokenCache());
+
+
+        public static IPublicClientApplication IdentityClientApp = PublicClientApplicationBuilder.Create(clientIdForUser).Build();
+        //public static ConfidentialClientApplication IdentityAppOnlyApp = new ConfidentialClientApplication(clientIdForApp, Constants.AuthorityUri, Constants.RedirectUriForAppAuthn, new ClientCredential(Constants.ClientSecret), new TokenCache(), new TokenCache());
+        public static IConfidentialClientApplication IdentityAppOnlyApp = ConfidentialClientApplicationBuilder.Create(clientIdForApp)
+            .WithClientSecret(Constants.ClientSecret)
+            .WithAuthority(new Uri(Constants.AuthorityUri))
+            .WithRedirectUri(Constants.RedirectUriForAppAuthn)
+            .Build();
 
         private static GraphServiceClient graphClient = null;
 
@@ -79,11 +85,13 @@ namespace console_csharp_snippets_sample
             IAccount firstAccount = accounts.FirstOrDefault();
             try
             {
-                authResult = await IdentityClientApp.AcquireTokenSilentAsync(Scopes, firstAccount);
+                authResult = await IdentityClientApp.AcquireTokenSilent(Scopes, firstAccount).ExecuteAsync();
             }
             catch (MsalUiRequiredException)
             {
-                authResult = await IdentityClientApp.AcquireTokenAsync(Scopes);
+                // TODO: 
+                //authResult = await IdentityClientApp.AcquireTokenSilent(Scopes).ExecuteAsync();
+                throw;
             }
             return authResult.AccessToken;
         }
@@ -124,7 +132,7 @@ namespace console_csharp_snippets_sample
         public static async Task<string> GetTokenForAppAsync()
         {
             AuthenticationResult authResult;
-            authResult = await IdentityAppOnlyApp.AcquireTokenForClientAsync(new string[] { "https://graph.microsoft.com/.default" });
+            authResult = await IdentityAppOnlyApp.AcquireTokenForClient(new string[] { "https://graph.microsoft.com/.default" }).ExecuteAsync();
             return authResult.AccessToken;
         }
 
@@ -134,7 +142,7 @@ namespace console_csharp_snippets_sample
         public static async void SignOut()
         {
             IEnumerable<IAccount> accounts = await IdentityClientApp.GetAccountsAsync();
-          
+
             foreach (var account in accounts.ToArray())
             {
                 await IdentityClientApp.RemoveAsync(account);

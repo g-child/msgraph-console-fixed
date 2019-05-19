@@ -19,7 +19,7 @@ namespace console_csharp_snippets_sample
                 //*********************************************************************
                 if (Constants.ClientIdForAppAuthn != "ENTER_YOUR_APP_ONLY_CLIENT_ID" &&
                     Constants.Tenant != "ENTER_YOUR_TENANT_NAME" &&
-                    Constants.ClientSecret!= "ENTER_YOUR_CLIENT_SECRET" )
+                    Constants.ClientSecret != "ENTER_YOUR_CLIENT_SECRET")
                 {
                     client = AuthenticationHelper.GetAuthenticatedClientForApp();
                 }
